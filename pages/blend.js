@@ -1,23 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Blend() {
   const [concept, setConcept] = useState('');
   const [acidity, setAcidity] = useState(3);
   const [bitterness, setBitterness] = useState(3);
   const [budget, setBudget] = useState(100);
-  const [result, setResult] = useState(null);
+  const [origins, setOrigins] = useState([]);
+  const [blendResult, setBlendResult] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('singleOrigins');
+    if (stored) setOrigins(JSON.parse(stored));
+  }, []);
+
+  const generateBlend = () => {
+    if (origins.length < 2) {
+      alert('最低でも2つのシングルオリジンが必要です。');
+      return;
+    }
+
+    const count = Math.min(
+      Math.max(2, Math.floor(Math.random() * 10) + 1),
+      origins.length
+    );
+
+    const shuffled = [...origins].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, count);
+
+    // 配合比率計算（合計100%）
+    const weights = Array.from({ length: count }, () => Math.random());
+    const sum = weights.reduce((a, b) => a + b, 0);
+    const distribution = weights.map((w) => Math.round((w / sum) * 100));
+
+    // 比率合計が100%になるように微調整
+    const total = distribution.reduce((a, b) => a + b, 0);
+    if (total !== 100) distribution[0] += 100 - total;
+
+    const result = selected.map((o, i) => ({
+      ...o,
+      ratio: distribution[i]
+    }));
+
+    setBlendResult({ concept, result });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // シンプルなダミー結果を作成（将来的にblendLogicと連携）
-    const generatedBlend = {
-      concept,
-      acidity,
-      bitterness,
-      budget,
-      recommendation: acidity > bitterness ? '明るく華やかなブレンド' : 'コク深いリッチなブレンド'
-    };
-    setResult(generatedBlend);
+    generateBlend();
   };
 
   return (
@@ -36,7 +65,7 @@ export default function Blend() {
         </label>
 
         <label>
-          酸味 (1–5)
+          酸味 (1-5)
           <input
             type="range"
             min="1"
@@ -47,7 +76,7 @@ export default function Blend() {
         </label>
 
         <label>
-          苦味 (1–5)
+          苦味 (1-5)
           <input
             type="range"
             min="1"
@@ -58,7 +87,7 @@ export default function Blend() {
         </label>
 
         <label>
-          予算（50円単位）
+          予算 (50円単位)
           <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
             {[...Array(10)].map((_, i) => (
               <option key={i} value={(i + 1) * 50}>
@@ -71,15 +100,17 @@ export default function Blend() {
         <button type="submit">生成する</button>
       </form>
 
-      {/* 生成結果表示 */}
-      {result && (
-        <div style={{ marginTop: '2rem', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
+      {blendResult && (
+        <div style={{ marginTop: '2rem' }}>
           <h2>生成されたブレンド</h2>
-          <p><strong>コンセプト:</strong> {result.concept}</p>
-          <p><strong>酸味:</strong> {result.acidity}</p>
-          <p><strong>苦味:</strong> {result.bitterness}</p>
-          <p><strong>予算:</strong> {result.budget}円</p>
-          <p><strong>おすすめタイプ:</strong> {result.recommendation}</p>
+          <p><strong>コンセプト:</strong> {blendResult.concept}</p>
+          <ul>
+            {blendResult.result.map((item, i) => (
+              <li key={i}>
+                {item.variety}（{item.region} / {item.altitude}m） - {item.ratio}%
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
