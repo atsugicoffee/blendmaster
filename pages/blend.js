@@ -101,15 +101,6 @@ const handleLabelGenerate = async (blend, index) => {
       }),
     });
 
-    const data = await response.json();
-    setLabels((prev) => ({ ...prev, [index]: data.label }));
-  } catch (err) {
-    console.error('ラベル生成エラー:', err);
-    setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
-  }
-};
-
-
       const data = await response.json();
       setLabels((prev) => ({ ...prev, [index]: data.label }));
     } catch (err) {
