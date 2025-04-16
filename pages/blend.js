@@ -5,10 +5,19 @@ export default function Blend() {
   const [acidity, setAcidity] = useState(3);
   const [bitterness, setBitterness] = useState(3);
   const [budget, setBudget] = useState(100);
+  const [result, setResult] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(`ブレンド作成コンセプト: ${concept}\n酸味: ${acidity}\n苦味: ${bitterness}\n予算: ${budget}円`);
+    // シンプルなダミー結果を作成（将来的にblendLogicと連携）
+    const generatedBlend = {
+      concept,
+      acidity,
+      bitterness,
+      budget,
+      recommendation: acidity > bitterness ? '明るく華やかなブレンド' : 'コク深いリッチなブレンド'
+    };
+    setResult(generatedBlend);
   };
 
   return (
@@ -27,7 +36,7 @@ export default function Blend() {
         </label>
 
         <label>
-          酸味 (1-5)
+          酸味 (1–5)
           <input
             type="range"
             min="1"
@@ -38,7 +47,7 @@ export default function Blend() {
         </label>
 
         <label>
-          苦味 (1-5)
+          苦味 (1–5)
           <input
             type="range"
             min="1"
@@ -49,7 +58,7 @@ export default function Blend() {
         </label>
 
         <label>
-          予算 (50円単位)
+          予算（50円単位）
           <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
             {[...Array(10)].map((_, i) => (
               <option key={i} value={(i + 1) * 50}>
@@ -61,6 +70,18 @@ export default function Blend() {
 
         <button type="submit">生成する</button>
       </form>
+
+      {/* 生成結果表示 */}
+      {result && (
+        <div style={{ marginTop: '2rem', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>
+          <h2>生成されたブレンド</h2>
+          <p><strong>コンセプト:</strong> {result.concept}</p>
+          <p><strong>酸味:</strong> {result.acidity}</p>
+          <p><strong>苦味:</strong> {result.bitterness}</p>
+          <p><strong>予算:</strong> {result.budget}円</p>
+          <p><strong>おすすめタイプ:</strong> {result.recommendation}</p>
+        </div>
+      )}
     </div>
   );
 }
