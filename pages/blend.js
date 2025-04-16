@@ -88,18 +88,27 @@ export default function Blend() {
     alert('ブレンドを保存しました');
   };
 
-  // ✅ ラベル生成
-  const handleLabelGenerate = async (blend, index) => {
-    try {
-      const response = await fetch('/api/generate-label', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          blendName: blend.name,
-          origins: blend.result,
-          concept: concept,
-        }),
-      });
+ // ✅ ラベル生成
+const handleLabelGenerate = async (blend, index) => {
+  try {
+    const response = await fetch('/api/generate-label', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        blendName: blend.name,
+        origins: blend.origins, // ← result ではなく origins に修正
+        concept: blend.concept || concept, // 念のため
+      }),
+    });
+
+    const data = await response.json();
+    setLabels((prev) => ({ ...prev, [index]: data.label }));
+  } catch (err) {
+    console.error('ラベル生成エラー:', err);
+    setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
+  }
+};
+
 
       const data = await response.json();
       setLabels((prev) => ({ ...prev, [index]: data.label }));
