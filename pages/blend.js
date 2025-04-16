@@ -96,18 +96,19 @@ const handleLabelGenerate = async (blend, index) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         blendName: blend.name,
-        origins: blend.origins, // ← result ではなく origins に修正
-        concept: blend.concept || concept, // 念のため
+        origins: blend.result, // ✅ ここが修正ポイント！
+        concept: blend.concept || concept,
       }),
     });
 
-      const data = await response.json();
-      setLabels((prev) => ({ ...prev, [index]: data.label }));
-    } catch (err) {
-      console.error('ラベル生成エラー:', err);
-      setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
-    }
-  };
+    const data = await response.json();
+    setLabels((prev) => ({ ...prev, [index]: data.label }));
+  } catch (err) {
+    console.error('ラベル生成エラー:', err);
+    setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
+  }
+};
+
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
