@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export default function SingleOriginForm() {
   const [form, setForm] = useState({
+    id: null,
     country: '',
     region: '',
     farm: '',
@@ -28,16 +29,33 @@ export default function SingleOriginForm() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newOrigin = { id: Date.now(), ...form };
-    const updated = [...origins, newOrigin];
-    setOrigins(updated);
-    localStorage.setItem('singleOrigins', JSON.stringify(updated));
+  const resetForm = () => {
     setForm({
+      id: null,
       country: '', region: '', farm: '', altitude: '', variety: '', process: '', roast: '',
       flavor: '', acidityDesc: '', acidityLevel: 3, bitternessLevel: 3, price: ''
     });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newOrigin = form.id ? form : { ...form, id: Date.now() };
+    const updated = form.id
+      ? origins.map(o => (o.id === form.id ? newOrigin : o))
+      : [...origins, newOrigin];
+    setOrigins(updated);
+    localStorage.setItem('singleOrigins', JSON.stringify(updated));
+    resetForm();
+  };
+
+  const handleDelete = (id) => {
+    const updated = origins.filter(o => o.id !== id);
+    setOrigins(updated);
+    localStorage.setItem('singleOrigins', JSON.stringify(updated));
+  };
+
+  const handleEdit = (origin) => {
+    setForm(origin);
   };
 
   return (
@@ -65,17 +83,24 @@ export default function SingleOriginForm() {
         </label>
 
         <input name="price" value={form.price} onChange={handleChange} placeholder="価格（円/kg）" required />
-        <button type="submit">保存</button>
+        <button type="submit">{form.id ? '更新する' : '保存'}</button>
+        {form.id && <button type="button" onClick={resetForm}>キャンセル</button>}
       </form>
 
       <h2 style={{ marginTop: '2rem' }}>登録済みオリジン</h2>
       {origins.length === 0 ? (
         <p>まだ登録されていません。</p>
       ) : (
-        <ul>
+        <ul style={{ padding: 0 }}>
           {origins.map((o) => (
-            <li key={o.id}>
-              {o.country} - {o.region} - {o.farm} / {o.variety} / {o.altitude}m / {o.process} / {o.roast} / {o.flavor} / 酸味: {o.acidityLevel}（{o.acidityDesc}） / 苦味: {o.bitternessLevel} / {o.price}円/kg
+            <li key={o.id} style={{ marginBottom: '1rem', listStyle: 'none', border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
+              <div>
+                {o.country} - {o.region} - {o.farm} / {o.variety} / {o.altitude}m / {o.process} / {o.roast} / {o.flavor} / 酸味: {o.acidityLevel}（{o.acidityDesc}） / 苦味: {o.bitternessLevel} / {o.price}円/kg
+              </div>
+              <div style={{ marginTop: '0.5rem' }}>
+                <button onClick={() => handleEdit(o)} style={{ marginRight: '0.5rem' }}>編集</button>
+                <button onClick={() => handleDelete(o.id)}>削除</button>
+              </div>
             </li>
           ))}
         </ul>
