@@ -7,6 +7,7 @@ export default function Blend() {
   const [budget, setBudget] = useState(100);
   const [origins, setOrigins] = useState([]);
   const [blendResults, setBlendResults] = useState([]);
+  const [comments, setComments] = useState({});
 
   useEffect(() => {
     const stored = localStorage.getItem('singleOrigins');
@@ -73,6 +74,19 @@ export default function Blend() {
       generateOneBlend(origins, concept)
     ];
     setBlendResults(blends);
+    setComments({});
+  };
+
+  const handleCommentChange = (index, value) => {
+    setComments(prev => ({ ...prev, [index]: value }));
+  };
+
+  const handleSave = (blend, comment) => {
+    const saved = localStorage.getItem('savedBlends');
+    const savedList = saved ? JSON.parse(saved) : [];
+    savedList.push({ ...blend, comment });
+    localStorage.setItem('savedBlends', JSON.stringify(savedList));
+    alert('ブレンドを保存しました');
   };
 
   return (
@@ -140,6 +154,18 @@ export default function Blend() {
                   </li>
                 ))}
               </ul>
+              <div style={{ marginTop: '1rem' }}>
+                <label>
+                  コメント：<br />
+                  <textarea
+                    rows="2"
+                    style={{ width: '100%' }}
+                    value={comments[index] || ''}
+                    onChange={(e) => handleCommentChange(index, e.target.value)}
+                  />
+                </label>
+                <button onClick={() => handleSave(blend, comments[index] || '')}>保存する</button>
+              </div>
             </div>
           ))}
         </div>
