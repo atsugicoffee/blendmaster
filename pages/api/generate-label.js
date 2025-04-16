@@ -1,18 +1,27 @@
 export default function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { blendName, concept, story } = req.body;
+  const { blendName, origins, concept } = req.body;
 
-  const label = {
-    name: `📛 ${blendName}`,
-    catchphrase: `${concept}の余韻が、あなたの日常にやさしく寄り添う。`,
-    visual: '水彩画の春風と本を読む人のシルエット',
-    story:
-      story ||
-      'このブレンドは心をほどくような穏やかさをテーマにしています。ふとした時間に、自然と向き合いたくなるような味わいに仕上げました。',
-  };
+  if (!blendName || !origins || !concept) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
 
-  res.status(200).json(label);
+  // ラベルっぽい文章を生成（シンプルな例）
+  const date = new Date().toLocaleDateString('ja-JP');
+  const labelText = `
+【${blendName}】
+Produced by BlendMaster ☕
+Date: ${date}
+
+コンセプト：
+${concept}
+
+使用オリジン：
+${origins.map((o, i) => `・${o.country} / ${o.farm} / ${o.process} / ${o.variety} - ${o.percentage}%`).join('\n')}
+`;
+
+  res.status(200).json({ label: labelText.trim() });
 }
