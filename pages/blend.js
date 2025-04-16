@@ -6,7 +6,7 @@ export default function Blend() {
   const [bitterness, setBitterness] = useState(3);
   const [budget, setBudget] = useState(100);
   const [origins, setOrigins] = useState([]);
-  const [blendResult, setBlendResult] = useState(null);
+  const [blendResults, setBlendResults] = useState([]);
 
   useEffect(() => {
     const stored = localStorage.getItem('singleOrigins');
@@ -23,12 +23,7 @@ export default function Blend() {
     return `「${concept}」というコンセプトに対して、${highlights} という構成でブレンドを設計しました。明るさ、甘さ、奥行きのバランスがとれた味わいに仕上がっています。`;
   };
 
-  const generateBlend = () => {
-    if (origins.length < 2) {
-      alert('最低でも2つのシングルオリジンが必要です。');
-      return;
-    }
-
+  const generateOneBlend = () => {
     const count = Math.min(
       Math.max(2, Math.floor(Math.random() * 9) + 2),
       origins.length
@@ -50,13 +45,17 @@ export default function Blend() {
     }));
 
     const story = generateStory(concept, result);
-
-    setBlendResult({ concept, result, story });
+    return { concept, result, story };
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    generateBlend();
+    if (origins.length < 2) {
+      alert('最低でも2つのシングルオリジンが必要です。');
+      return;
+    }
+    const blends = [generateOneBlend(), generateOneBlend(), generateOneBlend()];
+    setBlendResults(blends);
   };
 
   return (
@@ -110,18 +109,23 @@ export default function Blend() {
         <button type="submit">生成する</button>
       </form>
 
-      {blendResult && (
+      {blendResults.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
-          <h2>生成されたブレンド</h2>
-          <p><strong>コンセプト:</strong> {blendResult.concept}</p>
-          <ul>
-            {blendResult.result.map((item, i) => (
-              <li key={i}>
-                {item.country} / {item.farm} / {item.process} / {item.variety} - {item.ratio}%
-              </li>
-            ))}
-          </ul>
-          <p style={{ marginTop: '1rem' }}>{blendResult.story}</p>
+          <h2>生成されたブレンド案</h2>
+          {blendResults.map((blend, index) => (
+            <div key={index} style={{ marginBottom: '2rem' }}>
+              <h3>{index + 1}案目</h3>
+              <p><strong>コンセプト:</strong> {blend.concept}</p>
+              <ul>
+                {blend.result.map((item, i) => (
+                  <li key={i}>
+                    {item.country} / {item.farm} / {item.process} / {item.variety} - {item.ratio}%
+                  </li>
+                ))}
+              </ul>
+              <p style={{ marginTop: '1rem' }}>{blend.story}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
