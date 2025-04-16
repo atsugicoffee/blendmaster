@@ -1,60 +1,69 @@
-import { useState } from 'react';
+// pages/single.js
+import { useState, useEffect } from 'react';
 
-export default function SingleOrigin() {
-  const [name, setName] = useState('');
-  const [origin, setOrigin] = useState('');
-  const [process, setProcess] = useState('');
-  const [price, setPrice] = useState('');
-  const [note, setNote] = useState('');
-  const [saved, setSaved] = useState(false);
+export default function SingleOriginForm() {
+  const [variety, setVariety] = useState('');
+  const [altitude, setAltitude] = useState('');
+  const [region, setRegion] = useState('');
+  const [origins, setOrigins] = useState([]);
 
+  // 初回読み込み：localStorageから一覧を取得
+  useEffect(() => {
+    const stored = localStorage.getItem('singleOrigins');
+    if (stored) setOrigins(JSON.parse(stored));
+  }, []);
+
+  // 保存ボタン押下時
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const newOrigin = {
-      name,
-      origin,
-      process,
-      price,
-      note,
+      id: Date.now(), // 識別用ID
+      variety,
+      altitude,
+      region,
     };
-    console.log('登録されたシングルオリジン:', newOrigin);
-    setSaved(true);
+
+    const updated = [...origins, newOrigin];
+    setOrigins(updated);
+    localStorage.setItem('singleOrigins', JSON.stringify(updated));
+
+    // 入力リセット
+    setVariety('');
+    setAltitude('');
+    setRegion('');
   };
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>シングルオリジン登録</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', maxWidth: 480 }}>
-        <label>
-          名前
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-        </label>
-
-        <label>
-          生産国・地域
-          <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} required />
-        </label>
-
-        <label>
-          精製方法
-          <input type="text" value={process} onChange={(e) => setProcess(e.target.value)} required />
-        </label>
-
-        <label>
-          価格（円/kg）
-          <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
-        </label>
-
-        <label>
-          備考（例：品種、標高、味の特徴など）
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} />
-        </label>
-
-        <button type="submit">登録</button>
+      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
+        <div>
+          <label>品種: </label>
+          <input value={variety} onChange={(e) => setVariety(e.target.value)} required />
+        </div>
+        <div>
+          <label>標高(m): </label>
+          <input type="number" value={altitude} onChange={(e) => setAltitude(e.target.value)} required />
+        </div>
+        <div>
+          <label>地域: </label>
+          <input value={region} onChange={(e) => setRegion(e.target.value)} required />
+        </div>
+        <button type="submit">保存</button>
       </form>
 
-      {saved && (
-        <p style={{ marginTop: '1rem', color: 'green' }}>保存されました（仮）🎉</p>
+      <h2>登録済みオリジン</h2>
+      {origins.length === 0 ? (
+        <p>まだ登録されていません。</p>
+      ) : (
+        <ul>
+          {origins.map((o) => (
+            <li key={o.id}>
+              {o.variety}（{o.region} / {o.altitude}m）
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
