@@ -20,19 +20,17 @@ export default function Blend() {
     }
 
     const count = Math.min(
-      Math.max(2, Math.floor(Math.random() * 10) + 1),
+      Math.max(2, Math.floor(Math.random() * 9) + 2),
       origins.length
     );
 
     const shuffled = [...origins].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
 
-    // 配合比率計算（合計100%）
     const weights = Array.from({ length: count }, () => Math.random());
     const sum = weights.reduce((a, b) => a + b, 0);
     const distribution = weights.map((w) => Math.round((w / sum) * 100));
 
-    // 比率合計が100%になるように微調整
     const total = distribution.reduce((a, b) => a + b, 0);
     if (total !== 100) distribution[0] += 100 - total;
 
@@ -107,7 +105,7 @@ export default function Blend() {
           <ul>
             {blendResult.result.map((item, i) => (
               <li key={i}>
-                {item.variety}（{item.region} / {item.altitude}m） - {item.ratio}%
+                {item.country} / {item.farm} / {item.process} / {item.variety} - {item.ratio}%
               </li>
             ))}
           </ul>
