@@ -13,6 +13,16 @@ export default function Blend() {
     if (stored) setOrigins(JSON.parse(stored));
   }, []);
 
+  const generateStory = (concept, blendArray) => {
+    const highlights = blendArray
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 3)
+      .map(o => `${o.farm}の${o.variety}（${o.process}）が${o.ratio}%`)
+      .join('、');
+
+    return `「${concept}」というコンセプトに対して、${highlights} という構成でブレンドを設計しました。明るさ、甘さ、奥行きのバランスがとれた味わいに仕上がっています。`;
+  };
+
   const generateBlend = () => {
     if (origins.length < 2) {
       alert('最低でも2つのシングルオリジンが必要です。');
@@ -39,7 +49,9 @@ export default function Blend() {
       ratio: distribution[i]
     }));
 
-    setBlendResult({ concept, result });
+    const story = generateStory(concept, result);
+
+    setBlendResult({ concept, result, story });
   };
 
   const handleSubmit = (e) => {
@@ -109,6 +121,7 @@ export default function Blend() {
               </li>
             ))}
           </ul>
+          <p style={{ marginTop: '1rem' }}>{blendResult.story}</p>
         </div>
       )}
     </div>
