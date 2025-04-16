@@ -13,39 +13,37 @@ export default function Blend() {
     if (stored) setOrigins(JSON.parse(stored));
   }, []);
 
-  const generateStory = (concept, blendArray) => {
-    const highlights = blendArray
-      .sort((a, b) => b.ratio - a.ratio)
-      .slice(0, 3)
-      .map(o => `${o.farm}の${o.variety}（${o.process}）が${o.ratio}%`)
-      .join('、');
-
-    return `「${concept}」というコンセプトに対して、${highlights} という構成でブレンドを設計しました。明るさ、甘さ、奥行きのバランスがとれた味わいに仕上がっています。`;
+  const generateBlendName = (concept) => {
+    const themes = ['霞', '風', '灯', '詩', 'ひかり', '余韻', '囁き', 'しずく', '日和', '巡り'];
+    const rand = themes[Math.floor(Math.random() * themes.length)];
+    return `${concept.split(' ')[0]}の${rand}`;
   };
 
-  const generateOneBlend = () => {
+  const generateScene = (concept) => {
+    return `「${concept}」をテーマに、心がほどけるような時間をイメージしました。柔らかな光に包まれながら、遠くで揺れる木々の音や、そっと立ち上る香りとともに楽しんでください。`;
+  };
+
+  const generateOneBlend = (originList, concept) => {
     const count = Math.min(
       Math.max(2, Math.floor(Math.random() * 9) + 2),
-      origins.length
+      originList.length
     );
-
-    const shuffled = [...origins].sort(() => 0.5 - Math.random());
+    const shuffled = [...originList].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
 
     const weights = Array.from({ length: count }, () => Math.random());
     const sum = weights.reduce((a, b) => a + b, 0);
     const distribution = weights.map((w) => Math.round((w / sum) * 100));
-
     const total = distribution.reduce((a, b) => a + b, 0);
     if (total !== 100) distribution[0] += 100 - total;
 
-    const result = selected.map((o, i) => ({
-      ...o,
-      ratio: distribution[i]
-    }));
+    const result = selected.map((o, i) => ({ ...o, ratio: distribution[i] }));
 
-    const story = generateStory(concept, result);
-    return { concept, result, story };
+    return {
+      name: generateBlendName(concept),
+      scene: generateScene(concept),
+      result
+    };
   };
 
   const handleSubmit = (e) => {
@@ -54,7 +52,11 @@ export default function Blend() {
       alert('最低でも2つのシングルオリジンが必要です。');
       return;
     }
-    const blends = [generateOneBlend(), generateOneBlend(), generateOneBlend()];
+    const blends = [
+      generateOneBlend(origins, concept),
+      generateOneBlend(origins, concept),
+      generateOneBlend(origins, concept)
+    ];
     setBlendResults(blends);
   };
 
@@ -114,8 +116,8 @@ export default function Blend() {
           <h2>生成されたブレンド案</h2>
           {blendResults.map((blend, index) => (
             <div key={index} style={{ marginBottom: '2rem' }}>
-              <h3>{index + 1}案目</h3>
-              <p><strong>コンセプト:</strong> {blend.concept}</p>
+              <h3>{index + 1}案目：{blend.name}</h3>
+              <p>{blend.scene}</p>
               <ul>
                 {blend.result.map((item, i) => (
                   <li key={i}>
@@ -123,7 +125,6 @@ export default function Blend() {
                   </li>
                 ))}
               </ul>
-              <p style={{ marginTop: '1rem' }}>{blend.story}</p>
             </div>
           ))}
         </div>
