@@ -8,7 +8,7 @@ export default function Blend() {
   const [origins, setOrigins] = useState([]);
   const [blendResults, setBlendResults] = useState([]);
   const [comments, setComments] = useState({});
-  const [labels, setLabels] = useState({}); // ✅ ラベル出力用
+  const [labels, setLabels] = useState({}); // ✅ ラベル表示用
 
   useEffect(() => {
     const stored = localStorage.getItem('singleOrigins');
@@ -22,7 +22,7 @@ export default function Blend() {
       (theme) => `巡る${theme}`,
       (theme) => `${theme}の輪郭`,
       (theme) => `静かな${theme}の灯り`,
-      (theme) => `${theme}を旅する珈琲`
+      (theme) => `${theme}を旅する珈琲`,
     ];
     const fn = styles[Math.floor(Math.random() * styles.length)];
     return fn(concept.replace(/の.*$/, '').trim());
@@ -41,10 +41,7 @@ export default function Blend() {
   };
 
   const generateOneBlend = (originList, concept) => {
-    const count = Math.min(
-      Math.max(2, Math.floor(Math.random() * 9) + 2),
-      originList.length
-    );
+    const count = Math.min(Math.max(2, Math.floor(Math.random() * 9) + 2), originList.length);
     const shuffled = [...originList].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
 
@@ -59,7 +56,7 @@ export default function Blend() {
     return {
       name: generateBlendName(concept),
       scene: generateScene(concept),
-      result
+      result,
     };
   };
 
@@ -72,7 +69,7 @@ export default function Blend() {
     const blends = [
       generateOneBlend(origins, concept),
       generateOneBlend(origins, concept),
-      generateOneBlend(origins, concept)
+      generateOneBlend(origins, concept),
     ];
     setBlendResults(blends);
     setComments({});
@@ -80,7 +77,7 @@ export default function Blend() {
   };
 
   const handleCommentChange = (index, value) => {
-    setComments(prev => ({ ...prev, [index]: value }));
+    setComments((prev) => ({ ...prev, [index]: value }));
   };
 
   const handleSave = (blend, comment) => {
@@ -91,27 +88,23 @@ export default function Blend() {
     alert('ブレンドを保存しました');
   };
 
-  const handleLabelGenerate = async (index, blend) => {
+  // ✅ ラベル生成
+  const handleLabelGenerate = async (blend, index) => {
     try {
       const response = await fetch('/api/generate-label', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           blendName: blend.name,
-          origins: blend.result.map((o) => ({
-            country: o.country,
-            farm: o.farm,
-            process: o.process,
-            variety: o.variety,
-            percentage: o.ratio,
-          })),
+          origins: blend.result,
           concept: concept,
         }),
       });
+
       const data = await response.json();
       setLabels((prev) => ({ ...prev, [index]: data.label }));
-    } catch (error) {
-      console.error('ラベル生成エラー:', error);
+    } catch (err) {
+      console.error('ラベル生成エラー:', err);
       setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
     }
   };
@@ -192,11 +185,15 @@ export default function Blend() {
                   />
                 </label>
                 <button onClick={() => handleSave(blend, comments[index] || '')}>保存する</button>
-              </div>
-              <div style={{ marginTop: '1rem' }}>
-                <button onClick={() => handleLabelGenerate(index, blend)}>📎 ラベル生成</button>
+
+                {/* ✅ ラベル生成 */}
+                <button onClick={() => handleLabelGenerate(blend, index)} style={{ marginLeft: '1rem' }}>
+                  📎 ラベル生成
+                </button>
+
+                {/* ✅ ラベル表示 */}
                 {labels[index] && (
-                  <pre style={{ background: '#f9f9f9', padding: '1rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1rem', marginTop: '1rem' }}>
                     {labels[index]}
                   </pre>
                 )}
