@@ -14,13 +14,28 @@ export default function Blend() {
   }, []);
 
   const generateBlendName = (concept) => {
-    const themes = ['霞', '風', '灯', '詩', 'ひかり', '余韻', '囁き', 'しずく', '日和', '巡り'];
-    const rand = themes[Math.floor(Math.random() * themes.length)];
-    return `${concept.split(' ')[0]}の${rand}`;
+    const styles = [
+      (theme) => `${theme}の余白`,
+      (theme) => `${theme}に溶ける刻`,
+      (theme) => `巡る${theme}`,
+      (theme) => `${theme}の輪郭`,
+      (theme) => `静かな${theme}の灯り`,
+      (theme) => `${theme}を旅する珈琲`
+    ];
+    const fn = styles[Math.floor(Math.random() * styles.length)];
+    return fn(concept.replace(/の.*$/, '').trim());
   };
 
   const generateScene = (concept) => {
-    return `「${concept}」をテーマに、心がほどけるような時間をイメージしました。柔らかな光に包まれながら、遠くで揺れる木々の音や、そっと立ち上る香りとともに楽しんでください。`;
+    const examples = [
+      `「${concept}」をテーマに、誰にも邪魔されない時間が静かに流れる情景を描きました。`,
+      `「${concept}」という言葉から、草木がそよぎ、光がゆらめく瞬間を想像しました。`,
+      `「${concept}」は、遠い記憶の中にある風景。時間を忘れて味わう一杯を表現しました。`,
+      `「${concept}」を思い浮かべながら、あなただけの特別な午後に寄り添う香りをつくりました。`,
+      `このブレンドは「${concept}」という言葉が持つ奥行きを味覚で描いたものです。`,
+      `「${concept}」という響きから生まれた、心の中にそっと灯るようなコーヒーを表現しました。`
+    ];
+    return examples[Math.floor(Math.random() * examples.length)];
   };
 
   const generateOneBlend = (originList, concept) => {
