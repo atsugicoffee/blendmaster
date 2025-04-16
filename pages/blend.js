@@ -8,6 +8,7 @@ export default function Blend() {
   const [origins, setOrigins] = useState([]);
   const [blendResults, setBlendResults] = useState([]);
   const [comments, setComments] = useState({});
+  const [labels, setLabels] = useState({}); // ✅ ラベル出力用
 
   useEffect(() => {
     const stored = localStorage.getItem('singleOrigins');
@@ -75,6 +76,7 @@ export default function Blend() {
     ];
     setBlendResults(blends);
     setComments({});
+    setLabels({});
   };
 
   const handleCommentChange = (index, value) => {
@@ -87,6 +89,31 @@ export default function Blend() {
     savedList.push({ ...blend, comment });
     localStorage.setItem('savedBlends', JSON.stringify(savedList));
     alert('ブレンドを保存しました');
+  };
+
+  const handleLabelGenerate = async (index, blend) => {
+    try {
+      const response = await fetch('/api/generate-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blendName: blend.name,
+          origins: blend.result.map((o) => ({
+            country: o.country,
+            farm: o.farm,
+            process: o.process,
+            variety: o.variety,
+            percentage: o.ratio,
+          })),
+          concept: concept,
+        }),
+      });
+      const data = await response.json();
+      setLabels((prev) => ({ ...prev, [index]: data.label }));
+    } catch (error) {
+      console.error('ラベル生成エラー:', error);
+      setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
+    }
   };
 
   return (
@@ -165,6 +192,14 @@ export default function Blend() {
                   />
                 </label>
                 <button onClick={() => handleSave(blend, comments[index] || '')}>保存する</button>
+              </div>
+              <div style={{ marginTop: '1rem' }}>
+                <button onClick={() => handleLabelGenerate(index, blend)}>📎 ラベル生成</button>
+                {labels[index] && (
+                  <pre style={{ background: '#f9f9f9', padding: '1rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                    {labels[index]}
+                  </pre>
+                )}
               </div>
             </div>
           ))}
