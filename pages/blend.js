@@ -80,21 +80,22 @@ export default function Blend() {
   };
 };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (origins.length < 2) {
-      alert('最低でも2つのシングルオリジンが必要です。');
-      return;
-    }
-    const blends = [
-      generateOneBlend(origins, concept),
-      generateOneBlend(origins, concept),
-      generateOneBlend(origins, concept),
-    ];
-    setBlendResults(blends);
-    setComments({});
-    setLabels({});
-  };
+ const handleSubmit = (e) => {
+  e.preventDefault();
+  if (origins.length < 2) {
+    alert('最低でも2つのシングルオリジンが必要です。');
+    return;
+  }
+  const blends = [
+    generateOneBlend(origins, concept, budget),  // ← ✅ 予算を渡す！
+    generateOneBlend(origins, concept, budget),
+    generateOneBlend(origins, concept, budget),
+  ];
+  setBlendResults(blends);
+  setComments({});
+  setLabels({});
+};
+
 
   const handleCommentChange = (index, value) => {
     setComments((prev) => ({ ...prev, [index]: value }));
