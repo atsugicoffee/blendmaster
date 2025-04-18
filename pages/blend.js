@@ -168,16 +168,18 @@ const handleLabelGenerate = async (blend, index) => {
           /> {bitterness}
         </label>
 
-        <label>
-          予算 (50円単位)
-          <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
-            {[...Array(10)].map((_, i) => (
-              <option key={i} value={(i + 1) * 50}>
-                {(i + 1) * 50}円
-              </option>
-            ))}
-          </select>
-        </label>
+       <label>
+  予算（円単位で自由入力）
+  <input
+    type="number"
+    min="0"
+    value={budget}
+    onChange={(e) => setBudget(Number(e.target.value))}
+    placeholder="例: 250"
+    style={{ width: '100%' }}
+  />
+</label>
+
 
         <button type="submit">生成する</button>
       </form>
