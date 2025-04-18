@@ -189,6 +189,7 @@ const handleLabelGenerate = async (blend, index) => {
             <div key={index} style={{ marginBottom: '2rem' }}>
               <h3>{index + 1}案目：{blend.name}</h3>
               <p>{blend.scene}</p>
+              <p style={{ fontWeight: 'bold' }}>原価合計：{blend.cost}円</p>
               <ul>
                 {blend.result.map((item, i) => (
                   <li key={i}>
