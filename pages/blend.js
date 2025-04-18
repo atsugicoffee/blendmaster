@@ -8,7 +8,7 @@ export default function Blend() {
   const [origins, setOrigins] = useState([]);
   const [blendResults, setBlendResults] = useState([]);
   const [comments, setComments] = useState({});
-  const [labels, setLabels] = useState({}); // ✅ ラベル表示用
+  const [labels, setLabels] = useState({});
 
   useEffect(() => {
     const stored = localStorage.getItem('singleOrigins');
@@ -41,61 +41,73 @@ export default function Blend() {
   };
 
   const generateOneBlend = (originList, concept, budget) => {
-  const maxTries = 20;
-  const tolerance = 50;
+    const maxTries = 20;
+    const tolerance = 50;
 
-  for (let attempt = 0; attempt < maxTries; attempt++) {
-    const count = Math.floor(Math.random() * 4) + 2; // 2〜5種類
-    const shuffled = [...originList].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, count);
+    const minPrice = Math.min(...originList.map(o => o.price || 0));
+    const minBlendPrice = minPrice; // 100%最安値で構成する前提
 
-    const weights = Array.from({ length: count }, () => Math.random());
-    const sum = weights.reduce((a, b) => a + b, 0);
-    const distribution = weights.map((w) => Math.round((w / sum) * 100));
-    const total = distribution.reduce((a, b) => a + b, 0);
-    if (total !== 100) distribution[0] += 100 - total;
-
-    const cost = selected.reduce(
-      (acc, origin, i) => acc + (origin.price || 0) * (distribution[i] / 100),
-      0
-    );
-
-    if (cost >= budget - tolerance && cost <= budget + tolerance) {
-      const result = selected.map((o, i) => ({ ...o, ratio: distribution[i] }));
+    if (budget < minBlendPrice - tolerance) {
       return {
         name: generateBlendName(concept),
-        scene: generateScene(concept),
-        result,
-        cost: Math.round(cost)
+        scene: `ご指定の予算（${budget}円）は、最安の単一オリジンにも届かないためブレンドを構成できません。`,
+        result: [],
+        cost: 0,
       };
     }
-  }
 
-  // 条件に合うブレンドが作れなかった場合（fallback対応）
-  return {
-    name: generateBlendName(concept),
-    scene: `「${concept}」というテーマに基づいて設計されたブレンドです（予算条件には合致しませんでした）。`,
-    result: [],
-    cost: 0
+    for (let attempt = 0; attempt < maxTries; attempt++) {
+      const count = Math.floor(Math.random() * 4) + 2; // 2〜5種類
+      const shuffled = [...originList].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, count);
+
+      const weights = Array.from({ length: count }, () => Math.random());
+      const sum = weights.reduce((a, b) => a + b, 0);
+      const distribution = weights.map((w) => Math.round((w / sum) * 100));
+      const total = distribution.reduce((a, b) => a + b, 0);
+      if (total !== 100) distribution[0] += 100 - total;
+
+      const cost = selected.reduce(
+        (acc, origin, i) => acc + (origin.price || 0) * (distribution[i] / 100),
+        0
+      );
+
+      if (cost >= budget - tolerance && cost <= budget + tolerance) {
+        const result = selected.map((o, i) => ({ ...o, ratio: distribution[i] }));
+        return {
+          name: generateBlendName(concept),
+          scene: generateScene(concept),
+          result,
+          cost: Math.round(cost)
+        };
+      }
+    }
+
+    // 条件に合うブレンドが作れなかったが、最安値は超えている → 最安構成で表示
+    const fallback = [...originList].sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+    return {
+      name: generateBlendName(concept),
+      scene: `「${concept}」というテーマに沿い、最もお得なシングル構成でブレンドしました。`,
+      result: [{ ...fallback, ratio: 100 }],
+      cost: fallback.price || 0
+    };
   };
-};
 
- const handleSubmit = (e) => {
-  e.preventDefault();
-  if (origins.length < 2) {
-    alert('最低でも2つのシングルオリジンが必要です。');
-    return;
-  }
-  const blends = [
-    generateOneBlend(origins, concept, budget),  // ← ✅ 予算を渡す！
-    generateOneBlend(origins, concept, budget),
-    generateOneBlend(origins, concept, budget),
-  ];
-  setBlendResults(blends);
-  setComments({});
-  setLabels({});
-};
-
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (origins.length < 2) {
+      alert('最低でも2つのシングルオリジンが必要です。');
+      return;
+    }
+    const blends = [
+      generateOneBlend(origins, concept, budget),
+      generateOneBlend(origins, concept, budget),
+      generateOneBlend(origins, concept, budget),
+    ];
+    setBlendResults(blends);
+    setComments({});
+    setLabels({});
+  };
 
   const handleCommentChange = (index, value) => {
     setComments((prev) => ({ ...prev, [index]: value }));
@@ -109,27 +121,25 @@ export default function Blend() {
     alert('ブレンドを保存しました');
   };
 
- // ✅ ラベル生成
-const handleLabelGenerate = async (blend, index) => {
-  try {
-    const response = await fetch('/api/generate-label', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        blendName: blend.name,
-        origins: blend.result, // ✅ ここが修正ポイント！
-        concept: blend.concept || concept,
-      }),
-    });
+  const handleLabelGenerate = async (blend, index) => {
+    try {
+      const response = await fetch('/api/generate-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blendName: blend.name,
+          origins: blend.result,
+          concept: blend.concept || concept,
+        }),
+      });
 
-    const data = await response.json();
-    setLabels((prev) => ({ ...prev, [index]: data.label }));
-  } catch (err) {
-    console.error('ラベル生成エラー:', err);
-    setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
-  }
-};
-
+      const data = await response.json();
+      setLabels((prev) => ({ ...prev, [index]: data.label }));
+    } catch (err) {
+      console.error('ラベル生成エラー:', err);
+      setLabels((prev) => ({ ...prev, [index]: 'ラベル生成に失敗しました。' }));
+    }
+  };
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -145,7 +155,6 @@ const handleLabelGenerate = async (blend, index) => {
             style={{ width: '100%' }}
           />
         </label>
-
         <label>
           酸味 (1-5)
           <input
@@ -156,7 +165,6 @@ const handleLabelGenerate = async (blend, index) => {
             onChange={(e) => setAcidity(Number(e.target.value))}
           /> {acidity}
         </label>
-
         <label>
           苦味 (1-5)
           <input
@@ -167,20 +175,17 @@ const handleLabelGenerate = async (blend, index) => {
             onChange={(e) => setBitterness(Number(e.target.value))}
           /> {bitterness}
         </label>
-
-       <label>
-  予算（円単位で自由入力）
-  <input
-    type="number"
-    min="0"
-    value={budget}
-    onChange={(e) => setBudget(Number(e.target.value))}
-    placeholder="例: 250"
-    style={{ width: '100%' }}
-  />
-</label>
-
-
+        <label>
+          予算（円単位で自由入力）
+          <input
+            type="number"
+            min="0"
+            value={budget}
+            onChange={(e) => setBudget(Number(e.target.value))}
+            placeholder="例: 250"
+            style={{ width: '100%' }}
+          />
+        </label>
         <button type="submit">生成する</button>
       </form>
 
@@ -210,13 +215,9 @@ const handleLabelGenerate = async (blend, index) => {
                   />
                 </label>
                 <button onClick={() => handleSave(blend, comments[index] || '')}>保存する</button>
-
-                {/* ✅ ラベル生成 */}
                 <button onClick={() => handleLabelGenerate(blend, index)} style={{ marginLeft: '1rem' }}>
                   📎 ラベル生成
                 </button>
-
-                {/* ✅ ラベル表示 */}
                 {labels[index] && (
                   <pre style={{ whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1rem', marginTop: '1rem' }}>
                     {labels[index]}
