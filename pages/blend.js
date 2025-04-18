@@ -44,22 +44,12 @@ export default function Blend() {
     const maxTries = 20;
     const tolerance = 50;
 
-    const minPrice = Math.min(...originList.map(o => o.price || 0));
-    const minBlendPrice = minPrice; // 100%最安値で構成する前提
-
-    if (budget < minBlendPrice - tolerance) {
-      return {
-        name: generateBlendName(concept),
-        scene: `ご指定の予算（${budget}円）は、最安の単一オリジンにも届かないためブレンドを構成できません。`,
-        result: [],
-        cost: 0,
-      };
-    }
-
     for (let attempt = 0; attempt < maxTries; attempt++) {
-      const count = Math.floor(Math.random() * 4) + 2; // 2〜5種類
+      const count = Math.floor(Math.random() * 4) + 2; // 2~5種類
       const shuffled = [...originList].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, count);
+
+      if (selected.length < 2) continue;
 
       const weights = Array.from({ length: count }, () => Math.random());
       const sum = weights.reduce((a, b) => a + b, 0);
@@ -78,18 +68,22 @@ export default function Blend() {
           name: generateBlendName(concept),
           scene: generateScene(concept),
           result,
-          cost: Math.round(cost)
+          cost: Math.round(cost),
         };
       }
     }
 
-    // 条件に合うブレンドが作れなかったが、最安値は超えている → 最安構成で表示
-    const fallback = [...originList].sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+    // fallback: 最安構成で返す（ただし2種類以上）
+    const sorted = [...originList].sort((a, b) => (a.price || 0) - (b.price || 0));
+    const fallbackSelected = sorted.slice(0, 2);
+    const result = fallbackSelected.map((o, i) => ({ ...o, ratio: i === 0 ? 50 : 50 }));
+    const fallbackCost = result.reduce((acc, o) => acc + (o.price || 0) * (o.ratio / 100), 0);
+
     return {
       name: generateBlendName(concept),
       scene: `「${concept}」というテーマに沿い、最もお得なシングル構成でブレンドしました。`,
-      result: [{ ...fallback, ratio: 100 }],
-      cost: fallback.price || 0
+      result,
+      cost: Math.round(fallbackCost),
     };
   };
 
@@ -132,7 +126,6 @@ export default function Blend() {
           concept: blend.concept || concept,
         }),
       });
-
       const data = await response.json();
       setLabels((prev) => ({ ...prev, [index]: data.label }));
     } catch (err) {
@@ -155,26 +148,17 @@ export default function Blend() {
             style={{ width: '100%' }}
           />
         </label>
+
         <label>
           酸味 (1-5)
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={acidity}
-            onChange={(e) => setAcidity(Number(e.target.value))}
-          /> {acidity}
+          <input type="range" min="1" max="5" value={acidity} onChange={(e) => setAcidity(Number(e.target.value))} /> {acidity}
         </label>
+
         <label>
           苦味 (1-5)
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={bitterness}
-            onChange={(e) => setBitterness(Number(e.target.value))}
-          /> {bitterness}
+          <input type="range" min="1" max="5" value={bitterness} onChange={(e) => setBitterness(Number(e.target.value))} /> {bitterness}
         </label>
+
         <label>
           予算（円単位で自由入力）
           <input
@@ -186,6 +170,7 @@ export default function Blend() {
             style={{ width: '100%' }}
           />
         </label>
+
         <button type="submit">生成する</button>
       </form>
 
