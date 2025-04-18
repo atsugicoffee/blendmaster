@@ -40,8 +40,12 @@ export default function Blend() {
     return examples[Math.floor(Math.random() * examples.length)];
   };
 
-  const generateOneBlend = (originList, concept) => {
-    const count = Math.min(Math.max(2, Math.floor(Math.random() * 9) + 2), originList.length);
+  const generateOneBlend = (originList, concept, budget) => {
+  const maxTries = 20;
+  const tolerance = 50;
+
+  for (let attempt = 0; attempt < maxTries; attempt++) {
+    const count = Math.floor(Math.random() * 4) + 2; // 2〜5種類
     const shuffled = [...originList].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
 
@@ -51,14 +55,30 @@ export default function Blend() {
     const total = distribution.reduce((a, b) => a + b, 0);
     if (total !== 100) distribution[0] += 100 - total;
 
-    const result = selected.map((o, i) => ({ ...o, ratio: distribution[i] }));
+    const cost = selected.reduce(
+      (acc, origin, i) => acc + (origin.price || 0) * (distribution[i] / 100),
+      0
+    );
 
-    return {
-      name: generateBlendName(concept),
-      scene: generateScene(concept),
-      result,
-    };
+    if (cost >= budget - tolerance && cost <= budget + tolerance) {
+      const result = selected.map((o, i) => ({ ...o, ratio: distribution[i] }));
+      return {
+        name: generateBlendName(concept),
+        scene: generateScene(concept),
+        result,
+        cost: Math.round(cost)
+      };
+    }
+  }
+
+  // 条件に合うブレンドが作れなかった場合（fallback対応）
+  return {
+    name: generateBlendName(concept),
+    scene: `「${concept}」というテーマに基づいて設計されたブレンドです（予算条件には合致しませんでした）。`,
+    result: [],
+    cost: 0
   };
+};
 
   const handleSubmit = (e) => {
     e.preventDefault();
